@@ -25,7 +25,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'super-secret-key-change-in-production')
-app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=1)
+app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=3)
 app.config['JWT_ALGORITHM'] = 'HS256'
 
 # Initialize extensions
@@ -255,7 +255,7 @@ def list_accounts():
         return {'error': 'Error fetching accounts'}, 500
 
 @app.route('/api/accounts', methods=['POST'])
-@require_auth(allowed_roles=['customer', 'admin'])
+@require_auth(allowed_roles=['customer', 'teller', 'admin'])
 def create_account():
     """Create new account"""
     try:
