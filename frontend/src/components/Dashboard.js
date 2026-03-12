@@ -17,7 +17,7 @@ export default function Dashboard({ user }) {
       setTokenInfo(info);
       if (info) {
         const ms = info.expires - Date.now();
-        if (ms <= 0) { setTimeLeft('ISTEKAO'); return; }
+        if (ms <= 0) { setTimeLeft('EXPIRED'); return; }
         const h = Math.floor(ms / 3600000);
         const m = Math.floor((ms % 3600000) / 60000);
         const s = Math.floor((ms % 60000) / 1000);
@@ -32,24 +32,24 @@ export default function Dashboard({ user }) {
   return (
     <div className="page">
       <h2>Dashboard</h2>
-      <p className="page-subtitle">Dobrodošli, {user.full_name}!</p>
+      <p className="page-subtitle">Welcome, {user.full_name}!</p>
 
       <div className="grid-3">
         <div className="stat-card">
           <div className="stat-icon">👤</div>
-          <div className="stat-label">Uloga</div>
+          <div className="stat-label">Role</div>
           <div className="stat-value">{user.role.toUpperCase()}</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">🔗</div>
           <div className="stat-label">API Status</div>
           <div className={`stat-value ${health?.status === 'healthy' ? 'text-green' : 'text-red'}`}>
-            {health ? (health.status === 'healthy' ? 'Povezan' : 'Greška') : 'Provera...'}
+            {health ? (health.status === 'healthy' ? 'Connected' : 'Error') : 'Checking...'}
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">🔑</div>
-          <div className="stat-label">Token ističe</div>
+          <div className="stat-label">Token Expires</div>
           <div className="stat-value">
             {tokenInfo ? timeLeft : '-'}
           </div>
@@ -58,23 +58,23 @@ export default function Dashboard({ user }) {
 
       <div className="grid-2">
         <div className="info-card">
-          <h3>Korisničke informacije</h3>
+          <h3>User Information</h3>
           <table className="info-table">
             <tbody>
               <tr><td>ID</td><td>{user.user_id}</td></tr>
               <tr><td>Email</td><td>{user.email || tokenInfo?.user_id}</td></tr>
-              <tr><td>Ime</td><td>{user.full_name}</td></tr>
-              <tr><td>Uloga</td><td><span className={`badge badge-${user.role}`}>{user.role}</span></td></tr>
+              <tr><td>Name</td><td>{user.full_name}</td></tr>
+              <tr><td>Role</td><td><span className={`badge badge-${user.role}`}>{user.role}</span></td></tr>
             </tbody>
           </table>
         </div>
 
         <div className="info-card">
-          <h3>Brze akcije</h3>
+          <h3>Quick Actions</h3>
           <div className="quick-actions">
-            <Link to="/accounts" className="action-btn">📋 Moji računi</Link>
-            <Link to="/transfer" className="action-btn">💸 Novi transfer</Link>
-            <Link to="/token-info" className="action-btn">🔑 Token detalji</Link>
+            <Link to="/accounts" className="action-btn">📋 My Accounts</Link>
+            <Link to="/transfer" className="action-btn">💸 New Transfer</Link>
+            <Link to="/token-info" className="action-btn">🔑 Token Details</Link>
             {user.role === 'admin' && (
               <Link to="/admin" className="action-btn">⚙️ Admin panel</Link>
             )}
@@ -83,31 +83,31 @@ export default function Dashboard({ user }) {
       </div>
 
       <div className="info-card">
-        <h3>🔐 Sigurnosne informacije</h3>
+        <h3>🔐 Security Information</h3>
         <div className="security-features">
           <div className="security-item">
             <span className="security-check">✓</span>
-            <span>JWT autentifikacija sa {tokenInfo ? '24h' : '-'} istekom</span>
+            <span>JWT authentication with {tokenInfo ? '24h' : '-'} expiry</span>
           </div>
           <div className="security-item">
             <span className="security-check">✓</span>
-            <span>AES-256 enkripcija salda i iznosa transakcija</span>
+            <span>AES-256 encryption of balances and transaction amounts</span>
           </div>
           <div className="security-item">
             <span className="security-check">✓</span>
-            <span>bcrypt haširanje lozinki (salt rounds)</span>
+            <span>bcrypt password hashing (salt rounds)</span>
           </div>
           <div className="security-item">
             <span className="security-check">✓</span>
-            <span>RBAC kontrola pristupa ({user.role})</span>
+            <span>RBAC access control ({user.role})</span>
           </div>
           <div className="security-item">
             <span className="security-check">✓</span>
-            <span>Nginx reverse proxy sa SSL/TLS</span>
+            <span>Nginx reverse proxy with SSL/TLS</span>
           </div>
           <div className="security-item">
             <span className="security-check">✓</span>
-            <span>Rate limiting na API endpointima</span>
+            <span>Rate limiting on API endpoints</span>
           </div>
         </div>
       </div>

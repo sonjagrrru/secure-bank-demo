@@ -23,7 +23,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', data.token);
       onLogin(data);
     } catch (err) {
-      setError(err.error || 'Greška pri logovanje');
+      setError(err.error || 'Login error');
     } finally {
       setLoading(false);
     }
@@ -35,11 +35,11 @@ export default function Login({ onLogin }) {
     setError('');
     try {
       await api.register(regEmail, regName, regPassword);
-      setRegMessage('Registracija uspešna! Možete se prijaviti.');
+      setRegMessage('Registration successful! You can now log in.');
       setShowRegister(false);
       setEmail(regEmail);
     } catch (err) {
-      setError(err.error || 'Greška pri registraciji');
+      setError(err.error || 'Registration error');
     }
   };
 
@@ -55,63 +55,63 @@ export default function Login({ onLogin }) {
         {!showRegister ? (
           <>
             <form onSubmit={handleLogin} className="form">
-              <h2>Prijava</h2>
+              <h2>Login</h2>
               <div className="form-group">
                 <label>Email:</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@banking.local" required />
               </div>
               <div className="form-group">
-                <label>Lozinka:</label>
+                <label>Password:</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                   placeholder="admin123" required />
               </div>
               <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Prijavljivanje...' : 'Prijavi se'}
+                {loading ? 'Logging in...' : 'Log In'}
               </button>
             </form>
             <button className="btn-link" onClick={() => setShowRegister(true)}>
-              Nemate nalog? Registrujte se
+              Don't have an account? Register
             </button>
             <div className="test-users">
-              <p className="small-text">Test korisnici:</p>
+              <p className="small-text">Test users:</p>
               <ul>
                 <li><strong>Admin:</strong> admin@banking.local</li>
                 <li><strong>Teller:</strong> teller@banking.local</li>
                 <li><strong>Customer:</strong> customer@banking.local</li>
-                <li><strong>Lozinka:</strong> admin123</li>
+                <li><strong>Password:</strong> admin123</li>
               </ul>
             </div>
           </>
         ) : (
           <>
             <form onSubmit={handleRegister} className="form">
-              <h2>Registracija</h2>
+              <h2>Register</h2>
               <div className="form-group">
-                <label>Ime i prezime:</label>
+                <label>Full Name:</label>
                 <input type="text" value={regName} onChange={(e) => setRegName(e.target.value)}
-                  placeholder="Petar Petrović" required />
+                  placeholder="John Smith" required />
               </div>
               <div className="form-group">
                 <label>Email:</label>
                 <input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)}
-                  placeholder="email@primer.com" required />
+                  placeholder="email@example.com" required />
               </div>
               <div className="form-group">
-                <label>Lozinka:</label>
+                <label>Password:</label>
                 <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)}
-                  placeholder="Minimalno 6 karaktera" required minLength={6} />
+                  placeholder="Minimum 6 characters" required minLength={6} />
               </div>
-              <button type="submit" className="btn-primary">Registruj se</button>
+              <button type="submit" className="btn-primary">Register</button>
             </form>
             <button className="btn-link" onClick={() => setShowRegister(false)}>
-              Već imate nalog? Prijavite se
+              Already have an account? Log in
             </button>
           </>
         )}
 
         <footer className="footer">
-          <p>🔐 AES-256 enkripcija | bcrypt haširanje lozinki | JWT autentifikacija</p>
+          <p>🔐 AES-256 encryption | bcrypt password hashing | JWT authentication</p>
         </footer>
       </div>
     </div>

@@ -12,14 +12,14 @@ echo ==========================================
 echo.
 
 REM Check if API is available
-echo Proveravam da li je API dostupan...
+echo Checking if API is available...
 curl -s %API_URL%/api/health >nul 2>&1
 if errorlevel 1 (
-    echo API NIJE DOSTUPAN
-    echo Pokrenite aplikaciju sa: scripts\setup.bat
+    echo API NOT AVAILABLE
+    echo Start the application with: scripts\setup.bat
     exit /b 1
 )
-echo API DOSTUPAN
+echo API AVAILABLE
 echo.
 
 REM Test 1: Health Check
@@ -42,7 +42,7 @@ echo [TEST 3] Login
 for /f %%A in ('curl -s -X POST %API_URL%/api/auth/login -H "Content-Type: application/json" -d "{\"email\": \"admin@banking.local\", \"password\": \"admin123\"}" ^| jq -r ".token"') do set TOKEN=%%A
 
 if "!TOKEN!"=="" (
-    echo Login nije uspio - nema tokena
+    echo Login failed - no token
     exit /b 1
 )
 
@@ -53,7 +53,7 @@ echo.
 echo.
 
 REM Test 4: Health Check sa Tokenom
-echo [TEST 4] Health Check sa Autentifikacijom
+echo [TEST 4] Health Check with Authentication
 curl -s -X GET %API_URL%/api/health ^
   -H "Authorization: Bearer !TOKEN!" | jq .
 echo.
@@ -71,7 +71,7 @@ echo.
 echo.
 
 if "!ACCOUNT_ID!"=="" (
-    echo Nije moguće testirati dalje bez računa
+    echo Cannot test further without an account
     exit /b 0
 )
 
@@ -94,7 +94,7 @@ echo.
 echo.
 
 if "!SECOND_ACCOUNT_ID!"=="" (
-    echo Nije moguce testirati transfere bez drugog racuna
+    echo Cannot test transfers without a second account
     exit /b 0
 )
 
@@ -114,4 +114,4 @@ curl -s -X GET %API_URL%/api/admin/audit-log ^
 echo.
 echo.
 
-echo Testiranje je završeno!
+echo Testing is complete!

@@ -9,21 +9,21 @@ set -e
 BACKUP_DIR="./backups"
 BACKUP_FILE="$BACKUP_DIR/banking_db_$(date +%Y%m%d_%H%M%S).sql"
 
-# Kreiraj backup direktorijum
+# Create backup directory
 mkdir -p "$BACKUP_DIR"
 
 echo "Banking App - Database Backup"
 echo "================================="
 echo ""
-echo "Proveravanja bazu podataka..."
+echo "Checking database..."
 
 if ! docker ps | grep -q banking_postgres; then
-    echo "PostgreSQL kontejner nije pokrenut!"
-    echo "Pokrenite aplikaciju sa: ./scripts/setup.sh"
+    echo "PostgreSQL container is not running!"
+    echo "Start the application with: ./scripts/setup.sh"
     exit 1
 fi
 
-echo "Kreiram backup u: $BACKUP_FILE"
+echo "Creating backup to: $BACKUP_FILE"
 
 docker exec banking_postgres pg_dump \
     -U banking_user \
@@ -31,10 +31,10 @@ docker exec banking_postgres pg_dump \
     --format=plain \
     > "$BACKUP_FILE"
 
-echo "Backup je uspešno kreiran!"
+echo "Backup created successfully!"
 echo ""
-echo "Lokacija: $BACKUP_FILE"
-echo "Veličina: $(du -h "$BACKUP_FILE" | cut -f1)"
+echo "Location: $BACKUP_FILE"
+echo "Size: $(du -h "$BACKUP_FILE" | cut -f1)"
 echo ""
-echo "Za restore pokrenite:"
+echo "To restore run:"
 echo "  psql -U banking_user -d banking_db < $BACKUP_FILE"

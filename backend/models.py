@@ -1,5 +1,5 @@
 """
-Database modeli sa enkripcionom zaštitom
+Database models with encryption protection
 """
 
 from flask_sqlalchemy import SQLAlchemy
@@ -13,7 +13,7 @@ db = SQLAlchemy()
 encryption_service = EncryptionService()
 
 class User(db.Model):
-    """Korisnik sistema"""
+    """User"""
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -25,19 +25,19 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relacije
+    # Relationships
     accounts = db.relationship('Account', back_populates='user')
     audit_logs = db.relationship('AuditLog', back_populates='user')
     
     def set_password(self, password):
-        """Postavi šifrovanu lozinku"""
+        """Set hashed password"""
         self.password_hash = bcrypt.hashpw(
             password.encode('utf-8'),
             bcrypt.gensalt()
         ).decode('utf-8')
     
     def check_password(self, password):
-        """Proveri lozinku"""
+        """Verify password"""
         return bcrypt.checkpw(
             password.encode('utf-8'),
             self.password_hash.encode('utf-8')
@@ -47,7 +47,7 @@ class User(db.Model):
         return f'<User {self.email}>'
 
 class Account(db.Model):
-    """Bankaski račun"""
+    """Bank account"""
     __tablename__ = 'accounts'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -55,47 +55,47 @@ class Account(db.Model):
     account_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
     account_type = db.Column(db.String(50), nullable=False)  # checking, savings
     
-    # ENKRIPTOVANO: Žitak i PIN
+    # ENCRYPTED: Balance and PIN
     _balance_encrypted = db.Column('balance', db.Text, nullable=False)
     
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relacije
+    # Relationships
     user = db.relationship('User', back_populates='accounts')
     from_transactions = db.relationship('Transaction', foreign_keys='Transaction.from_account_id', backref='from_account')
     to_transactions = db.relationship('Transaction', foreign_keys='Transaction.to_account_id', backref='to_account')
     
     @property
     def balance(self):
-        """Dekriptuj saldo"""
+        """Decrypt balance"""
         if self._balance_encrypted:
             return float(encryption_service.decrypt(self._balance_encrypted))
         return 0.0
     
     @balance.setter
     def balance(self, value):
-        """Enkriptuj saldo"""
+        """Encrypt balance"""
         self._balance_encrypted = encryption_service.encrypt(str(value))
     
     @staticmethod
     def generate_account_number():
-        """Generiši jedinstveni broj računa"""
+        """Generate unique account number"""
         return f"ACC{secrets.token_hex(8).upper()}"
     
     def __repr__(self):
         return f'<Account {self.account_number}>'
 
 class Transaction(db.Model):
-    """Transakcija između računa"""
+    """Transaction between accounts"""
     __tablename__ = 'transactions'
     
     id = db.Column(db.Integer, primary_key=True)
     from_account_id = db.Column(db.Integer, db.ForeignKey('accounts.id'), nullable=False)
     to_account_id = db.Column(db.Integer, db.ForeignKey('accounts.id'), nullable=False)
     
-    # ENKRIPTOVANO: Iznos
+    # ENCRYPTED: Amount
     _amount_encrypted = db.Column('amount', db.Text, nullable=False)
     
     description = db.Column(db.String(255))
@@ -104,21 +104,21 @@ class Transaction(db.Model):
     
     @property
     def amount(self):
-        """Dekriptuj iznos"""
+        """Decrypt amount"""
         if self._amount_encrypted:
             return float(encryption_service.decrypt(self._amount_encrypted))
         return 0.0
     
     @amount.setter
     def amount(self, value):
-        """Enkriptuj iznos"""
+        """Encrypt amount"""
         self._amount_encrypted = encryption_service.encrypt(str(value))
     
     def __repr__(self):
         return f'<Transaction {self.id}>'
 
 class AuditLog(db.Model):
-    """Audit log - pregled svih akcija"""
+    """Audit log - record of all actions"""
     __tablename__ = 'audit_logs'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -126,10 +126,10 @@ class AuditLog(db.Model):
     action = db.Column(db.String(100), nullable=False, index=True)
     details = db.Column(db.Text)
     status = db.Column(db.String(50), nullable=False)  # success, failed
-    ip_address = db.Column(db.String(45))  # IPv4 i IPv6
+    ip_address = db.Column(db.String(45))  # IPv4 and IPv6
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     
-    # Relacija
+    # Relationship
     user = db.relationship('User', back_populates='audit_logs')
     
     def __repr__(self):

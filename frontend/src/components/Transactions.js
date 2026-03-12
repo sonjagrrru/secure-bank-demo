@@ -17,7 +17,7 @@ export default function Transactions() {
       const data = await api.getTransactions(parseInt(id));
       setTransactions(data.transactions || []);
     } catch (err) {
-      setError(err.error || 'Greška pri učitavanju transakcija');
+      setError(err.error || 'Error loading transactions');
       setTransactions([]);
     } finally {
       setLoading(false);
@@ -35,18 +35,18 @@ export default function Transactions() {
 
   return (
     <div className="page">
-      <h2>📜 Istorija transakcija</h2>
-      <p className="page-subtitle">Pregled transakcija za račun</p>
+      <h2>📜 Transaction History</h2>
+      <p className="page-subtitle">View transactions for an account</p>
 
       <div className="info-card">
         <form onSubmit={handleSearch} className="form-inline">
           <div className="form-group">
-            <label>ID računa:</label>
+            <label>Account ID:</label>
             <input type="number" value={inputId} onChange={(e) => setInputId(e.target.value)}
-              placeholder="Unesite ID računa" required />
+              placeholder="Enter account ID" required />
           </div>
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Učitavanje...' : 'Prikaži transakcije'}
+            {loading ? 'Loading...' : 'Show Transactions'}
           </button>
         </form>
       </div>
@@ -55,16 +55,16 @@ export default function Transactions() {
 
       {transactions.length > 0 ? (
         <div className="info-card">
-          <h3>Transakcije ({transactions.length})</h3>
+          <h3>Transactions ({transactions.length})</h3>
           <div className="table-responsive">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Iznos (RSD)</th>
-                  <th>Opis</th>
+                  <th>Amount (RSD)</th>
+                  <th>Description</th>
                   <th>Status</th>
-                  <th>Datum</th>
+                  <th>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -72,13 +72,13 @@ export default function Transactions() {
                   <tr key={t.transaction_id}>
                     <td><strong>#{t.transaction_id}</strong></td>
                     <td className="amount">
-                      {parseFloat(t.amount).toLocaleString('sr-Latn', { minimumFractionDigits: 2 })}
+                      {parseFloat(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
                     <td>{t.description}</td>
                     <td>
                       <span className={`badge badge-${t.status}`}>{t.status}</span>
                     </td>
-                    <td>{new Date(t.created_at).toLocaleString('sr-Latn')}</td>
+                    <td>{new Date(t.created_at).toLocaleString('en-US')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -89,7 +89,7 @@ export default function Transactions() {
         !loading && !error && (
           <div className="info-card">
             <p className="text-muted text-center">
-              {accountId ? 'Nema transakcija za ovaj račun.' : 'Unesite ID računa da vidite transakcije.'}
+              {accountId ? 'No transactions for this account.' : 'Enter an account ID to view transactions.'}
             </p>
           </div>
         )
@@ -97,8 +97,8 @@ export default function Transactions() {
 
       <div className="info-card">
         <p className="text-muted">
-          💡 Kreirajte račune na <Link to="/accounts">stranici računa</Link> i
-          izvršite transfer na <Link to="/transfer">stranici transfera</Link> da biste videli transakcije.
+          💡 Create accounts on the <Link to="/accounts">accounts page</Link> and
+          make a transfer on the <Link to="/transfer">transfer page</Link> to see transactions.
         </p>
       </div>
     </div>

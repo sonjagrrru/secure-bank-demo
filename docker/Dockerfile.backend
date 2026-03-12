@@ -2,21 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instaliraj sistemske dependencije
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Kopiraj requirements i instaliraj Python pakete
+# Copy requirements and install Python packages
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiraj aplikaciju
+# Copy application
 COPY backend/ .
 
-# Kreiraj non-root user
+# Create non-root user
 RUN useradd -m -u 1000 bankingapp && chown -R bankingapp:bankingapp /app
 USER bankingapp
 
@@ -24,5 +24,5 @@ USER bankingapp
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:5000/api/health')"
 
-# Pokreni aplikaciju sa povećanim timeoutom za inicijalizaciju
+# Start application with increased timeout for initialization
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--worker-class", "sync", "--timeout", "120", "--graceful-timeout", "30", "app:app"]

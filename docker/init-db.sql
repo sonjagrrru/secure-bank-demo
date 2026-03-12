@@ -1,9 +1,9 @@
--- Inicijalizacija baze podataka sa enkripcionom zaštitom
+-- Database initialization with encryption protection
 
--- Kreiraj extension za UUID
+-- Create UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Kreiraj users tabelu
+-- Create users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -18,13 +18,13 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 
--- Kreiraj accounts tabelu sa enkripcionim balansom
+-- Create accounts table with encrypted balance
 CREATE TABLE accounts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     account_number VARCHAR(50) UNIQUE NOT NULL,
     account_type VARCHAR(50) NOT NULL,
-    balance TEXT NOT NULL,  -- Enkriptovano
+    balance TEXT NOT NULL,  -- Encrypted
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -33,12 +33,12 @@ CREATE TABLE accounts (
 CREATE INDEX idx_accounts_user_id ON accounts(user_id);
 CREATE INDEX idx_accounts_account_number ON accounts(account_number);
 
--- Kreiraj transactions tabelu sa enkripcionim iznosom
+-- Create transactions table with encrypted amount
 CREATE TABLE transactions (
     id SERIAL PRIMARY KEY,
     from_account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     to_account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    amount TEXT NOT NULL,  -- Enkriptovano
+    amount TEXT NOT NULL,  -- Encrypted
     description VARCHAR(255),
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -48,7 +48,7 @@ CREATE INDEX idx_transactions_from_account ON transactions(from_account_id);
 CREATE INDEX idx_transactions_to_account ON transactions(to_account_id);
 CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 
--- Kreiraj audit_logs tabelu
+-- Create audit_logs table
 CREATE TABLE audit_logs (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -63,7 +63,7 @@ CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_action ON audit_logs(action);
 CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
 
--- Kreiraj trigger za ažuriranje updated_at kolone
+-- Create trigger to update updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -78,7 +78,7 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
 CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert test korisnika (lozinka: admin123)
+-- Insert test users (password: admin123)
 INSERT INTO users (email, full_name, password_hash, role) VALUES
 (
     'admin@banking.local',
@@ -90,7 +90,7 @@ INSERT INTO users (email, full_name, password_hash, role) VALUES
 INSERT INTO users (email, full_name, password_hash, role) VALUES
 (
     'teller@banking.local',
-    'Blagajnik',
+    'Teller',
     '$2b$12$P4aENKMc43CjrT1l0WZOZubTbilnUp/Xz6TCafq1/sDtvGm6/pL0e',
     'teller'
 ) ON CONFLICT (email) DO NOTHING;
@@ -98,12 +98,12 @@ INSERT INTO users (email, full_name, password_hash, role) VALUES
 INSERT INTO users (email, full_name, password_hash, role) VALUES
 (
     'customer@banking.local',
-    'Kupac',
+    'Customer',
     '$2b$12$P4aENKMc43CjrT1l0WZOZubTbilnUp/Xz6TCafq1/sDtvGm6/pL0e',
     'customer'
 ) ON CONFLICT (email) DO NOTHING;
 
--- Dozvole za bazu podataka
+-- Database permissions
 GRANT CONNECT ON DATABASE banking_db TO banking_user;
 GRANT USAGE ON SCHEMA public TO banking_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO banking_user;

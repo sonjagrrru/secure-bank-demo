@@ -22,7 +22,7 @@ async function request(method, path, body) {
   return data;
 }
 
-// ============= AUTO REFRESH TOKENA =============
+// ============= AUTO TOKEN REFRESH =============
 let refreshTimer = null;
 
 export function startAutoRefresh() {
@@ -33,18 +33,18 @@ export function startAutoRefresh() {
     const info = parseToken(token);
     if (!info) return;
 
-    // Obnovi 15 sekundi pre isteka
+    // Refresh 15 seconds before expiry
     const msLeft = info.expires - Date.now();
     if (msLeft < 15000 && msLeft > -300000) {
       try {
         const data = await request('POST', '/auth/refresh');
         localStorage.setItem('token', data.token);
-        console.log('[AUTH] Token obnovljen automatski');
+        console.log('[AUTH] Token refreshed automatically');
       } catch (e) {
-        console.warn('[AUTH] Neuspela obnova tokena:', e);
+        console.warn('[AUTH] Token refresh failed:', e);
       }
     }
-  }, 5000); // provera svakih 5s
+  }, 5000); // check every 5s
 }
 
 export function stopAutoRefresh() {

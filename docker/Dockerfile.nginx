@@ -1,10 +1,10 @@
-# Nginx sa Certbot (SSL) i security alatima
+# Nginx with Certbot (SSL) and security tools
 FROM nginx:alpine
 
-# Instaliraj Certbot i Fail2ban
+# Install Certbot and Fail2ban
 RUN apk add --no-cache certbot certbot-nginx openssl curl
 
-# Pravi sve potrebne direktorijume za Nginx cache PRIJE nego što kopiraš config
+# Create all required directories for Nginx cache BEFORE copying config
 RUN mkdir -p /var/cache/nginx/client_temp \
     /var/cache/nginx/fastcgi_temp \
     /var/cache/nginx/proxy_temp \
@@ -15,10 +15,10 @@ RUN mkdir -p /var/cache/nginx/client_temp \
     /etc/letsencrypt/live/banking.local && \
     chown -R nginx:nginx /var/cache/nginx /var/log/nginx
 
-# Kopira nginx konfiguraciju (posle što su direktorijumi kreirani)
+# Copy nginx configuration (after directories are created)
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Generiši self-signed sertifikat za lokalni razvoj
+# Generate self-signed certificate for local development
 RUN openssl req -x509 -newkey rsa:2048 -nodes \
     -out /etc/letsencrypt/live/banking.local/fullchain.pem \
     -keyout /etc/letsencrypt/live/banking.local/privkey.pem \
@@ -28,5 +28,5 @@ RUN openssl req -x509 -newkey rsa:2048 -nodes \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -kf https://localhost/health || exit 1
 
-# Pokreni Nginx
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]

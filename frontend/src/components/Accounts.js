@@ -13,14 +13,14 @@ export default function Accounts({ user }) {
 
   const isTeller = user?.role === 'teller';
   const isAdmin = user?.role === 'admin';
-  const canCreate = !isTeller; // blagajnik ne kreira, samo pregleda
+  const canCreate = !isTeller; // teller doesn't create, only views
 
   const loadAccounts = async () => {
     try {
       const data = await api.listAccounts();
       setAccounts(data.accounts || []);
     } catch (err) {
-      setError(err.error || 'Greška pri učitavanju računa');
+      setError(err.error || 'Error loading accounts');
     } finally {
       setLoading(false);
     }
@@ -35,11 +35,11 @@ export default function Accounts({ user }) {
     setCreating(true);
     try {
       const data = await api.createAccount(accountType, parseFloat(initialBalance) || 0);
-      setMessage(`Račun kreiran: ${data.account_number}`);
+      setMessage(`Account created: ${data.account_number}`);
       setInitialBalance('');
       loadAccounts();
     } catch (err) {
-      setError(err.error || 'Greška pri kreiranju računa');
+      setError(err.error || 'Error creating account');
     } finally {
       setCreating(false);
     }
@@ -47,40 +47,40 @@ export default function Accounts({ user }) {
 
   return (
     <div className="page">
-      <h2>{isTeller ? '🏦 Pregled svih računa' : 'Bankarski računi'}</h2>
+      <h2>{isTeller ? '🏦 View All Accounts' : 'Bank Accounts'}</h2>
       <p className="page-subtitle">
-        {isTeller ? 'Pregled računa svih klijenata banke' : 'Kreirajte i pregledajte račune'}
+        {isTeller ? 'View accounts of all bank clients' : 'Create and view accounts'}
       </p>
 
       {error && <div className="error-message">{error}</div>}
       {message && <div className="success-message">{message}</div>}
 
       {isTeller || isAdmin ? (
-        /* Tabelarni prikaz za blagajnika i admina */
+        /* Table view for teller and admin */
         <div className="info-card">
           <div className="card-header">
-            <h3>Svi računi ({accounts.length})</h3>
+            <h3>All Accounts ({accounts.length})</h3>
             <button onClick={loadAccounts} className="btn-small" disabled={loading}>
-              {loading ? '...' : '🔄 Osveži'}
+              {loading ? '...' : '🔄 Refresh'}
             </button>
           </div>
           {loading ? (
-            <p className="text-muted">Učitavanje računa...</p>
+            <p className="text-muted">Loading accounts...</p>
           ) : accounts.length === 0 ? (
-            <p className="text-muted">Nema računa u sistemu.</p>
+            <p className="text-muted">No accounts in the system.</p>
           ) : (
             <div className="table-responsive">
               <table className="data-table">
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Broj računa</th>
-                    <th>Vlasnik</th>
+                    <th>Account Number</th>
+                    <th>Owner</th>
                     <th>Email</th>
-                    <th>Tip</th>
-                    <th>Stanje (RSD)</th>
-                    <th>Kreiran</th>
-                    <th>Akcije</th>
+                    <th>Type</th>
+                    <th>Balance (RSD)</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -92,16 +92,16 @@ export default function Accounts({ user }) {
                       <td>{acc.user_email || '-'}</td>
                       <td>
                         <span className={`badge badge-${acc.account_type}`}>
-                          {acc.account_type === 'checking' ? 'Tekući' : 'Štedni'}
+                          {acc.account_type === 'checking' ? 'Checking' : 'Savings'}
                         </span>
                       </td>
                       <td className="amount">
-                        {parseFloat(acc.balance).toLocaleString('sr-Latn', { minimumFractionDigits: 2 })}
+                        {parseFloat(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
-                      <td>{new Date(acc.created_at).toLocaleDateString('sr-Latn')}</td>
+                      <td>{new Date(acc.created_at).toLocaleDateString('en-US')}</td>
                       <td>
                         <Link to={`/transactions/${acc.account_id}`} className="btn-small">
-                          📜 Transakcije
+                          📜 Transactions
                         </Link>
                       </td>
                     </tr>
@@ -112,64 +112,64 @@ export default function Accounts({ user }) {
           )}
         </div>
       ) : (
-        /* Kartice za klijenta */
+        /* Cards for customer */
         <div className="grid-2">
           {canCreate && (
             <div className="info-card">
-              <h3>Kreiraj novi račun</h3>
+              <h3>Create New Account</h3>
               <form onSubmit={handleCreate} className="form">
                 <div className="form-group">
-                  <label>Tip računa:</label>
+                  <label>Account Type:</label>
                   <select value={accountType} onChange={(e) => setAccountType(e.target.value)}>
-                    <option value="checking">Tekući (Checking)</option>
-                    <option value="savings">Štedni (Savings)</option>
+                    <option value="checking">Checking</option>
+                    <option value="savings">Savings</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Početni saldo (RSD):</label>
+                  <label>Initial Balance (RSD):</label>
                   <input type="number" min="0" step="0.01" value={initialBalance}
                     onChange={(e) => setInitialBalance(e.target.value)}
                     placeholder="5000" required />
                 </div>
                 <button type="submit" className="btn-primary" disabled={creating}>
-                  {creating ? 'Kreiranje...' : 'Kreiraj račun'}
+                  {creating ? 'Creating...' : 'Create Account'}
                 </button>
               </form>
             </div>
           )}
 
           <div className="info-card">
-            <h3>Moji računi</h3>
+            <h3>My Accounts</h3>
             {loading ? (
-              <p className="text-muted">Učitavanje računa...</p>
+              <p className="text-muted">Loading accounts...</p>
             ) : accounts.length === 0 ? (
-              <p className="text-muted">Nemate račune. Kreirajte novi račun.</p>
+              <p className="text-muted">You have no accounts. Create a new account.</p>
             ) : (
               <div className="accounts-list">
                 {accounts.map((acc) => (
                   <div key={acc.account_id} className="account-item">
                     <div className="account-header">
                       <span className={`account-type badge badge-${acc.account_type}`}>
-                        {acc.account_type === 'checking' ? '💳 Tekući' : '🏦 Štedni'}
+                        {acc.account_type === 'checking' ? '💳 Checking' : '🏦 Savings'}
                       </span>
                       <span className="account-id">ID: {acc.account_id}</span>
                     </div>
                     <div className="account-number">{acc.account_number}</div>
                     <div className="account-balance">
-                      {parseFloat(acc.balance).toLocaleString('sr-Latn', { minimumFractionDigits: 2 })} RSD
+                      {parseFloat(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })} RSD
                     </div>
                     <div className="account-date">
-                      Kreiran: {new Date(acc.created_at).toLocaleDateString('sr-Latn')}
+                      Created: {new Date(acc.created_at).toLocaleDateString('en-US')}
                     </div>
                     <Link to={`/transactions/${acc.account_id}`} className="btn-small">
-                      📜 Transakcije
+                      📜 Transactions
                     </Link>
                   </div>
                 ))}
               </div>
             )}
             <button onClick={loadAccounts} className="btn-secondary" style={{ marginTop: 12 }}>
-              🔄 Osveži račune
+              🔄 Refresh Accounts
             </button>
           </div>
         </div>

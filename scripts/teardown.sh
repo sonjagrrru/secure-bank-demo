@@ -9,26 +9,26 @@ set -e
 echo "Banking App - Teardown Script"
 echo "=================================="
 
-# Provera Docker-a
+# Check Docker
 if ! command -v docker-compose &> /dev/null; then
-    echo "Docker Compose nije instaliran."
+    echo "Docker Compose is not installed."
     exit 1
 fi
 
-echo "Zaustavljam kontejnere..."
+echo "Stopping containers..."
 docker-compose -f docker/docker-compose.yml down
 
 echo ""
-echo "Želite li da obrišete podatke iz baze? (y/n)"
+echo "Do you want to delete database data? (y/n)"
 read -r response
 
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    echo "Brišem volume..."
+    echo "Deleting volumes..."
     docker-compose -f docker/docker-compose.yml down -v
-    echo "Podaci su obrisani"
+    echo "Data has been deleted"
 else
-    echo "Podaci su sačuvani"
+    echo "Data has been preserved"
 fi
 
 echo ""
-echo "Teardown je završen!"
+echo "Teardown is complete!"

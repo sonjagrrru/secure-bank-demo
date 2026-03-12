@@ -16,8 +16,8 @@ export default function Navbar({ user, onLogout }) {
     <nav className="navbar">
       <div className="navbar-brand">🏦 Banking App</div>
       <div className="navbar-links">
-        <NavLink to="/">Početna</NavLink>
-        <NavLink to="/accounts">{user?.role === 'teller' ? 'Pregled računa' : 'Računi'}</NavLink>
+        <NavLink to="/">Home</NavLink>
+        <NavLink to="/accounts">{user?.role === 'teller' ? 'View Accounts' : 'Accounts'}</NavLink>
         <NavLink to="/transfer">Transfer</NavLink>
         {user?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
         <NavLink to="/token-info">🔑 Token</NavLink>
@@ -27,10 +27,10 @@ export default function Navbar({ user, onLogout }) {
         <span className="navbar-name">{user?.full_name}</span>
         {tokenInfo && (
           <span className={`navbar-token-status ${tokenInfo.isExpired ? 'expired' : 'valid'}`}>
-            {tokenInfo.isExpired ? '⚠ Token istekao' : '✓ Token aktivan'}
+            {tokenInfo.isExpired ? '⚠ Token expired' : '✓ Token active'}
           </span>
         )}
-        <button onClick={handleLogout} className="btn-logout">Odjavi se</button>
+        <button onClick={handleLogout} className="btn-logout">Log Out</button>
       </div>
     </nav>
   );

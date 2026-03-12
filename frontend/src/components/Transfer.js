@@ -24,7 +24,7 @@ export default function Transfer() {
       );
       setResult(data);
     } catch (err) {
-      setError(err.error || 'Greška pri transferu');
+      setError(err.error || 'Transfer error');
     } finally {
       setLoading(false);
     }
@@ -32,54 +32,54 @@ export default function Transfer() {
 
   return (
     <div className="page">
-      <h2>💸 Transfer novca</h2>
-      <p className="page-subtitle">Prenesite novac između računa</p>
+      <h2>💸 Money Transfer</h2>
+      <p className="page-subtitle">Transfer money between accounts</p>
 
       <div className="grid-2">
         <div className="info-card">
-          <h3>Nova transakcija</h3>
+          <h3>New Transaction</h3>
 
           {error && <div className="error-message">{error}</div>}
 
           <form onSubmit={handleTransfer} className="form">
             <div className="form-group">
-              <label>Sa računa (ID):</label>
+              <label>From Account (ID):</label>
               <input type="number" value={fromId} onChange={(e) => setFromId(e.target.value)}
-                placeholder="ID izvornog računa" required />
+                placeholder="Source account ID" required />
             </div>
             <div className="form-group">
-              <label>Na račun (ID):</label>
+              <label>To Account (ID):</label>
               <input type="number" value={toId} onChange={(e) => setToId(e.target.value)}
-                placeholder="ID odredišnog računa" required />
+                placeholder="Destination account ID" required />
             </div>
             <div className="form-group">
-              <label>Iznos (RSD):</label>
+              <label>Amount (RSD):</label>
               <input type="number" min="0.01" step="0.01" value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="1000.00" required />
             </div>
             <div className="form-group">
-              <label>Opis (opciono):</label>
+              <label>Description (optional):</label>
               <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-                placeholder="Plaćanje računa, transfer, itd." />
+                placeholder="Bill payment, transfer, etc." />
             </div>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Slanje...' : 'Izvrši transfer'}
+              {loading ? 'Sending...' : 'Execute Transfer'}
             </button>
           </form>
         </div>
 
         <div className="info-card">
-          <h3>Rezultat transakcije</h3>
+          <h3>Transaction Result</h3>
           {result ? (
             <div className="transfer-result">
-              <div className="result-status success">✓ Transfer uspešan</div>
+              <div className="result-status success">✓ Transfer successful</div>
               <table className="info-table">
                 <tbody>
-                  <tr><td>ID transakcije</td><td><strong>{result.transaction_id}</strong></td></tr>
+                  <tr><td>Transaction ID</td><td><strong>{result.transaction_id}</strong></td></tr>
                   <tr><td>Status</td><td><span className="badge badge-success">{result.status}</span></td></tr>
-                  <tr><td>Iznos</td><td>{parseFloat(result.amount).toLocaleString('sr-Latn', { minimumFractionDigits: 2 })} RSD</td></tr>
-                  <tr><td>Vreme</td><td>{new Date(result.timestamp).toLocaleString('sr-Latn')}</td></tr>
+                  <tr><td>Amount</td><td>{parseFloat(result.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} RSD</td></tr>
+                  <tr><td>Time</td><td>{new Date(result.timestamp).toLocaleString('en-US')}</td></tr>
                 </tbody>
               </table>
 
@@ -89,33 +89,33 @@ export default function Transfer() {
               </div>
             </div>
           ) : (
-            <p className="text-muted">Izvršite transfer da vidite rezultat.</p>
+            <p className="text-muted">Execute a transfer to see the result.</p>
           )}
         </div>
       </div>
 
       <div className="info-card">
-        <h3>ℹ️ Kako funkcioniše transfer</h3>
+        <h3>ℹ️ How Transfer Works</h3>
         <div className="security-features">
           <div className="security-item">
             <span className="security-check">1</span>
-            <span>JWT token se šalje u Authorization headeru</span>
+            <span>JWT token is sent in Authorization header</span>
           </div>
           <div className="security-item">
             <span className="security-check">2</span>
-            <span>Backend verifikuje token i proverava RBAC dozvole</span>
+            <span>Backend verifies token and checks RBAC permissions</span>
           </div>
           <div className="security-item">
             <span className="security-check">3</span>
-            <span>Proverava se da li imate pristup izvornom računu</span>
+            <span>Checks if you have access to the source account</span>
           </div>
           <div className="security-item">
             <span className="security-check">4</span>
-            <span>Saldo se dekriptuje (AES-256), ažurira i ponovo enkriptuje</span>
+            <span>Balance is decrypted (AES-256), updated, and re-encrypted</span>
           </div>
           <div className="security-item">
             <span className="security-check">5</span>
-            <span>Transakcija se evidentira u audit logu</span>
+            <span>Transaction is recorded in the audit log</span>
           </div>
         </div>
       </div>

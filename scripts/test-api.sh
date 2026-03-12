@@ -14,14 +14,14 @@ echo "Banking App - API Test Script"
 echo "================================"
 echo ""
 
-# Provera da li je API dostupan
-echo -n "Određivam da li je API dostupan... "
+# Check if API is available
+echo -n "Checking if API is available... "
 if ! curl -s "$API_URL/api/health" > /dev/null; then
-    echo "NIJE DOSTUPAN"
-    echo "Pokrenite aplikaciju sa: ./scripts/setup.sh"
+    echo "NOT AVAILABLE"
+    echo "Start the application with: ./scripts/setup.sh"
     exit 1
 fi
-echo "DOSTUPAN"
+echo "AVAILABLE"
 echo ""
 
 # Test 1: Health Check
@@ -57,14 +57,14 @@ echo "$LOGIN_RESPONSE" | jq .
 TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.token // empty')
 
 if [ -z "$TOKEN" ]; then
-    echo "Login nije uspio - nema tokena"
+    echo "Login failed - no token"
     exit 1
 fi
 echo ""
 echo ""
 
 # Test 4: Get Health sa Token-om
-echo -e "${ECHO_COLOR}[TEST 4] Health Check sa Autentifikacijom${NC}"
+echo -e "${ECHO_COLOR}[TEST 4] Health Check with Authentication${NC}"
 curl -s -X GET "$API_URL/api/health" \
   -H "Authorization: Bearer $TOKEN" | jq .
 echo ""
@@ -88,7 +88,7 @@ echo ""
 echo ""
 
 if [ -z "$ACCOUNT_ID" ]; then
-    echo "Nije moguće testirati transakcije bez računa"
+    echo "Cannot test transactions without an account"
     exit 0
 fi
 
@@ -143,4 +143,4 @@ curl -s -X GET "$API_URL/api/admin/audit-log" \
 echo ""
 echo ""
 
-echo "Testiranje je završeno!"
+echo "Testing is complete!"

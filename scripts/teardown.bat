@@ -9,23 +9,23 @@ echo ============================================
 REM Check Docker Compose
 docker-compose --version >nul 2>&1
 if errorlevel 1 (
-    echo Docker Compose nije instaliran.
+    echo Docker Compose is not installed.
     exit /b 1
 )
 
-echo Zaustavljam kontejnere...
+echo Stopping containers...
 docker-compose -f docker/docker-compose.yml down
 
 echo.
-set /p response="Želite li da obrišete podatke iz baze? (y/n): "
+set /p response="Do you want to delete database data? (y/n): "
 
 if /i "%response%"=="y" (
-    echo Brisem volume...
+    echo Deleting volumes...
     docker-compose -f docker/docker-compose.yml down -v
-    echo Podaci su obrisani
+    echo Data has been deleted
 ) else (
-    echo Podaci su sacuvani
+    echo Data has been preserved
 )
 
 echo.
-echo Teardown je zavrsen!
+echo Teardown is complete!

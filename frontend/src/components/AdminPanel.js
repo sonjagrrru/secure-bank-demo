@@ -15,7 +15,7 @@ export default function AdminPanel() {
       const data = await api.getUsers();
       setUsers(data.users || []);
     } catch (err) {
-      setError(err.error || 'Greška pri učitavanju korisnika');
+      setError(err.error || 'Error loading users');
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ export default function AdminPanel() {
       const data = await api.getAuditLog();
       setAuditLogs(data.audit_logs || []);
     } catch (err) {
-      setError(err.error || 'Greška pri učitavanju audit loga');
+      setError(err.error || 'Error loading audit log');
     } finally {
       setLoading(false);
     }
@@ -44,14 +44,14 @@ export default function AdminPanel() {
   return (
     <div className="page">
       <h2>⚙️ Admin Panel</h2>
-      <p className="page-subtitle">Upravljanje korisnicima i pregled audit logova</p>
+      <p className="page-subtitle">User management and audit log review</p>
 
       {error && <div className="error-message">{error}</div>}
 
       <div className="tabs">
         <button className={`tab ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => handleTabChange('users')}>
-          👥 Korisnici
+          👥 Users
         </button>
         <button className={`tab ${activeTab === 'audit' ? 'active' : ''}`}
           onClick={() => handleTabChange('audit')}>
@@ -62,9 +62,9 @@ export default function AdminPanel() {
       {activeTab === 'users' && (
         <div className="info-card">
           <div className="card-header">
-            <h3>Korisnici ({users.length})</h3>
+            <h3>Users ({users.length})</h3>
             <button onClick={loadUsers} className="btn-small" disabled={loading}>
-              {loading ? '...' : '🔄 Osveži'}
+              {loading ? '...' : '🔄 Refresh'}
             </button>
           </div>
           {users.length > 0 ? (
@@ -74,9 +74,9 @@ export default function AdminPanel() {
                   <tr>
                     <th>ID</th>
                     <th>Email</th>
-                    <th>Ime</th>
-                    <th>Uloga</th>
-                    <th>Registrovan</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Registered</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -86,14 +86,14 @@ export default function AdminPanel() {
                       <td><strong>{u.email}</strong></td>
                       <td>{u.full_name}</td>
                       <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
-                      <td>{new Date(u.created_at).toLocaleDateString('sr-Latn')}</td>
+                      <td>{new Date(u.created_at).toLocaleDateString('en-US')}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-muted">Kliknite "Osveži" da učitate korisnike.</p>
+            <p className="text-muted">Click "Refresh" to load users.</p>
           )}
         </div>
       )}
@@ -103,7 +103,7 @@ export default function AdminPanel() {
           <div className="card-header">
             <h3>Audit Log ({auditLogs.length})</h3>
             <button onClick={loadAuditLog} className="btn-small" disabled={loading}>
-              {loading ? '...' : '🔄 Osveži'}
+              {loading ? '...' : '🔄 Refresh'}
             </button>
           </div>
           {auditLogs.length > 0 ? (
@@ -112,12 +112,12 @@ export default function AdminPanel() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Korisnik</th>
-                    <th>Akcija</th>
-                    <th>Detalji</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
                     <th>Status</th>
                     <th>IP</th>
-                    <th>Vreme</th>
+                    <th>Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,14 +131,14 @@ export default function AdminPanel() {
                         <span className={`badge badge-${log.status}`}>{log.status}</span>
                       </td>
                       <td className="mono">{log.ip_address}</td>
-                      <td>{new Date(log.timestamp).toLocaleString('sr-Latn')}</td>
+                      <td>{new Date(log.timestamp).toLocaleString('en-US')}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-muted">Kliknite "Osveži" da učitate audit logove.</p>
+            <p className="text-muted">Click "Refresh" to load audit logs.</p>
           )}
         </div>
       )}

@@ -1,8 +1,8 @@
 """
-Security moduli:
-- Enkripcija podataka na disku (AES-256)
-- Heširanje lozinki (bcrypt)
-- TLS/SSL za komunikaciju
+Security modules:
+- Data encryption at rest (AES-256)
+- Password hashing (bcrypt)
+- TLS/SSL for communication
 """
 
 from cryptography.fernet import Fernet
@@ -13,62 +13,62 @@ import os
 import bcrypt
 
 class EncryptionService:
-    """Servis za enkripcionu zaštitu podataka na disku"""
+    """Service for data encryption at rest"""
     
     def __init__(self, master_key=None):
         """
-        Inicijalizuj encryption servis
-        master_key - korisni u produkciji, koristi env varijablu
+        Initialize encryption service
+        master_key - used in production, uses env variable
         """
         if master_key is None:
-            # U produkciji koristiti: export ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
+            # In production use: export ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
             master_key = os.getenv('ENCRYPTION_KEY', None)
         
-        # Ako nema ključa ili nije validan, generiši privremeni
+        # If no key or key is not valid, generate a temporary one
         if not master_key:
             self.cipher = Fernet(Fernet.generate_key())
             return
         
-        # Proveri da li je ključ validan Fernet ključ
+        # Check if the key is a valid Fernet key
         try:
             self.cipher = Fernet(master_key.encode() if isinstance(master_key, str) else master_key)
         except Exception:
-            # Ako ključ nije validan, generiši novi
+            # If key is not valid, generate a new one
             self.cipher = Fernet(Fernet.generate_key())
     
     def encrypt(self, plaintext):
-        """Enkriptuj tekst"""
+        """Encrypt text"""
         try:
             ciphertext = self.cipher.encrypt(plaintext.encode())
             return ciphertext.decode()
         except Exception as e:
-            raise ValueError(f"Greška pri enkripcioniranju: {str(e)}")
+            raise ValueError(f"Encryption error: {str(e)}")
     
     def decrypt(self, ciphertext):
-        """Dekriptuj tekst"""
+        """Decrypt text"""
         try:
             plaintext = self.cipher.decrypt(ciphertext.encode())
             return plaintext.decode()
         except Exception as e:
-            raise ValueError(f"Greška pri dekripcioniranju: {str(e)}")
+            raise ValueError(f"Decryption error: {str(e)}")
 
 def hash_password(password):
-    """Heširaj lozinku sa bcrypt"""
+    """Hash password with bcrypt"""
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def verify_password(password, hashed):
-    """Proveri lozinku"""
+    """Verify password"""
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 class TLSConfig:
-    """Konfiguracija za TLS/SSL"""
+    """Configuration for TLS/SSL"""
     
-    # Putanja do SSL sertifikata i ključa
+    # Path to SSL certificate and key
     CERT_PATH = os.getenv('SSL_CERT_PATH', '/etc/ssl/certs/server.crt')
     KEY_PATH = os.getenv('SSL_KEY_PATH', '/etc/ssl/private/server.key')
     
-    # SSL opcije
+    # SSL options
     SSL_CONTEXT = {
         'certfile': CERT_PATH,
         'keyfile': KEY_PATH,
@@ -78,5 +78,5 @@ class TLSConfig:
     
     @staticmethod
     def is_configured():
-        """Proveri da li su SSL fajlovi dostupni"""
+        """Check if SSL files are available"""
         return os.path.exists(TLSConfig.CERT_PATH) and os.path.exists(TLSConfig.KEY_PATH)

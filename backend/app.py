@@ -1,6 +1,6 @@
 """
-Bankarski sistem sa enkripcionom zaštitom i RBAC kontrolom
-Open Source rešenje sa Flask, PostgreSQL i TLS/SSL
+Banking system with encryption and RBAC access control
+Open Source solution with Flask, PostgreSQL and TLS/SSL
 """
 
 from flask import Flask, request, jsonify
@@ -19,7 +19,7 @@ from security import EncryptionService, hash_password, verify_password
 
 load_dotenv()
 
-# Konfiguracija aplikacije
+# Application configuration
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:pass@localhost/banking_db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -28,10 +28,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'super-secret-key-change-in-p
 app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=1)
 app.config['JWT_ALGORITHM'] = 'HS256'
 
-# Inicijalizacija ekstenzija
+# Initialize extensions
 db.init_app(app)
 
-# CORS konfiguracija
+# CORS configuration
 cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
 cors_origins = [origin.strip() for origin in cors_origins]
 CORS(app, 
@@ -53,10 +53,10 @@ limiter = Limiter(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ============= HELPER FUNKCIJE =============
+# ============= HELPER FUNCTIONS =============
 
 def generate_token(user_id, role):
-    """Generiši JWT token"""
+    """Generate JWT token"""
     payload = {
         'user_id': user_id,
         'role': role,
@@ -67,7 +67,7 @@ def generate_token(user_id, role):
     return token
 
 def verify_token(token):
-    """Verifikuj JWT token"""
+    """Verify JWT token"""
     try:
         payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=[app.config['JWT_ALGORITHM']])
         return payload
@@ -77,23 +77,23 @@ def verify_token(token):
         return None
 
 def require_auth(allowed_roles=None):
-    """Dekorator za zahtev autentifikacije i proveru role"""
+    """Decorator for requiring authentication and role verification"""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            # Ekstraktuj token iz Authorization headera
+            # Extract token from Authorization header
             auth_header = request.headers.get('Authorization', '')
             if not auth_header.startswith('Bearer '):
-                return {'error': 'Nedostaje autentifikacija'}, 401
+                return {'error': 'Authentication required'}, 401
             
             token = auth_header.split(' ', 1)[1]
             payload = verify_token(token)
             if not payload:
-                return {'error': 'Nevažeći token'}, 401
+                return {'error': 'Invalid token'}, 401
             
             if allowed_roles and payload['role'] not in allowed_roles:
-                logger.warning(f"Pristup odbijen: korisnik {payload['user_id']} sa ulogom {payload['role']}")
-                return {'error': 'Nemate pristup ovom resursu'}, 403
+                logger.warning(f"Access denied: user {payload['user_id']} with role {payload['role']}")
+                return {'error': 'Access denied'}, 403
             
             request.user_id = payload['user_id']
             request.user_role = payload['role']
@@ -102,7 +102,7 @@ def require_auth(allowed_roles=None):
     return decorator
 
 def log_action(action, details, user_id, status='success'):
-    """Evidentiraj sve akcije za audit"""
+    """Log all actions for audit"""
     audit = AuditLog(
         user_id=user_id,
         action=action,
@@ -119,12 +119,12 @@ def log_action(action, details, user_id, status='success'):
 @app.route('/api/auth/register', methods=['POST'])
 @limiter.limit("5 per hour")
 def register():
-    """Registracija novog korisnika"""
+    """Register new user"""
     try:
         data = request.get_json()
         
         if User.query.filter_by(email=data['email']).first():
-            return {'error': 'Email već postoji'}, 400
+            return {'error': 'Email already exists'}, 400
         
         user = User(
             email=data['email'],
@@ -136,28 +136,28 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        log_action('REGISTER', f"Novi korisnik: {data['email']}", user.id)
+        log_action('REGISTER', f"New user: {data['email']}", user.id)
         
         return {
-            'message': 'Registracija uspešna',
+            'message': 'Registration successful',
             'user_id': user.id
         }, 201
         
     except Exception as e:
-        logger.error(f"Greška pri registraciji: {str(e)}")
-        return {'error': 'Greška pri registraciji'}, 500
+        logger.error(f"Registration error: {str(e)}")
+        return {'error': 'Registration error'}, 500
 
 @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
 @limiter.limit("10 per hour")
 def login():
-    """Login korisnika"""
+    """User login"""
     if request.method == 'OPTIONS':
         return '', 200
     
     try:
         data = request.get_json()
         if not data or 'email' not in data or 'password' not in data:
-            return {'error': 'Nedostaju email i lozinka'}, 400
+            return {'error': 'Email and password are required'}, 400
         
         email = data.get('email', '').lower()
         password = data.get('password', '')
@@ -165,17 +165,17 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if not user:
-            logger.warning(f"Korisnik sa emailom {email} nije pronađen")
-            log_action('LOGIN_FAILED', f"Korisnik ne postoji: {email}", None, 'failed')
-            return {'error': 'Pogrešan email ili lozinka'}, 401
+            logger.warning(f"User with email {email} not found")
+            log_action('LOGIN_FAILED', f"User not found: {email}", None, 'failed')
+            return {'error': 'Invalid email or password'}, 401
         
         if not user.check_password(password):
-            logger.warning(f"Pogrešna lozinka za korisnika {email}")
-            log_action('LOGIN_FAILED', f"Pogrešna lozinka: {email}", user.id, 'failed')
-            return {'error': 'Pogrešan email ili lozinka'}, 401
+            logger.warning(f"Wrong password for user {email}")
+            log_action('LOGIN_FAILED', f"Wrong password: {email}", user.id, 'failed')
+            return {'error': 'Invalid email or password'}, 401
         
         token = generate_token(user.id, user.role)
-        log_action('LOGIN', f"Logovanje: {email}", user.id)
+        log_action('LOGIN', f"Login: {email}", user.id)
         
         return {
             'token': token,
@@ -185,48 +185,48 @@ def login():
         }, 200
         
     except Exception as e:
-        logger.error(f"Greška pri logovanje: {str(e)}")
-        return {'error': 'Greška pri logovanje'}, 500
+        logger.error(f"Login error: {str(e)}")
+        return {'error': 'Login error'}, 500
 
 @app.route('/api/auth/refresh', methods=['POST'])
 def refresh_token():
-    """Obnovi JWT token pre isteka"""
+    """Refresh JWT token before expiry"""
     try:
         auth_header = request.headers.get('Authorization', '')
         if not auth_header.startswith('Bearer '):
-            return {'error': 'Nedostaje token'}, 401
+            return {'error': 'Token required'}, 401
 
         token = auth_header.split(' ', 1)[1]
         try:
-            # Prihvati i tokene koji su istekli u poslednjih 5 minuta
+            # Accept tokens that expired within the last 5 minutes
             payload = jwt.decode(
                 token, app.config['SECRET_KEY'],
                 algorithms=[app.config['JWT_ALGORITHM']],
                 options={'verify_exp': False}
             )
         except jwt.InvalidTokenError:
-            return {'error': 'Nevažeći token'}, 401
+            return {'error': 'Invalid token'}, 401
 
-        # Proveri da token nije stariji od 24h (zaštita od zloupotrebe)
+        # Check that token is not older than 24h (abuse protection)
         iat = datetime.utcfromtimestamp(payload.get('iat', 0))
         if (datetime.utcnow() - iat).total_seconds() > 86400:
-            return {'error': 'Token je previše star za obnovu'}, 401
+            return {'error': 'Token is too old for renewal'}, 401
 
         new_token = generate_token(payload['user_id'], payload['role'])
-        log_action('TOKEN_REFRESH', f"Obnova tokena za korisnika {payload['user_id']}", payload['user_id'])
+        log_action('TOKEN_REFRESH', f"Token renewal for user {payload['user_id']}", payload['user_id'])
 
         return {'token': new_token}, 200
 
     except Exception as e:
-        logger.error(f"Greška pri obnovi tokena: {str(e)}")
-        return {'error': 'Greška pri obnovi tokena'}, 500
+        logger.error(f"Token refresh error: {str(e)}")
+        return {'error': 'Token refresh error'}, 500
 
 # ============= ACCOUNT ENDPOINTS =============
 
 @app.route('/api/accounts', methods=['GET'])
 @require_auth(allowed_roles=['customer', 'teller', 'admin'])
 def list_accounts():
-    """Preuzmi sve račune korisnika"""
+    """Get all user accounts"""
     try:
         if request.user_role in ('admin', 'teller'):
             accounts = Account.query.all()
@@ -251,20 +251,20 @@ def list_accounts():
 
         return {'accounts': result}, 200
     except Exception as e:
-        logger.error(f"Greška pri preuzimanju računa: {str(e)}")
-        return {'error': 'Greška pri preuzimanju računa'}, 500
+        logger.error(f"Error fetching accounts: {str(e)}")
+        return {'error': 'Error fetching accounts'}, 500
 
 @app.route('/api/accounts', methods=['POST'])
 @require_auth(allowed_roles=['customer', 'admin'])
 def create_account():
-    """Kreiraj novi račun"""
+    """Create new account"""
     try:
         data = request.get_json()
         
-        # Samo admin može kreirati račun za druge, customer samo za sebe
+        # Only admin can create account for others, customer only for themselves
         user_id = data.get('user_id', request.user_id)
         if request.user_role != 'admin' and user_id != request.user_id:
-            return {'error': 'Nemate pristup'}, 403
+            return {'error': 'Access denied'}, 403
         
         account = Account(
             user_id=user_id,
@@ -276,7 +276,7 @@ def create_account():
         db.session.add(account)
         db.session.commit()
         
-        log_action('CREATE_ACCOUNT', f"Novi račun: {account.account_number}", request.user_id)
+        log_action('CREATE_ACCOUNT', f"New account: {account.account_number}", request.user_id)
         
         return {
             'account_id': account.id,
@@ -285,22 +285,22 @@ def create_account():
         }, 201
         
     except Exception as e:
-        logger.error(f"Greška pri kreiranju računa: {str(e)}")
-        return {'error': 'Greška pri kreiranju računa'}, 500
+        logger.error(f"Error creating account: {str(e)}")
+        return {'error': 'Error creating account'}, 500
 
 @app.route('/api/accounts/<int:account_id>', methods=['GET'])
 @require_auth(allowed_roles=['customer', 'teller', 'admin'])
 def get_account(account_id):
-    """Preuzmи detalje računa"""
+    """Get account details"""
     try:
         account = Account.query.get(account_id)
         
         if not account:
-            return {'error': 'Račun ne postoji'}, 404
+            return {'error': 'Account not found'}, 404
         
-        # Provera dozvole
+        # Permission check
         if request.user_role == 'customer' and account.user_id != request.user_id:
-            return {'error': 'Nemate pristup tom računu'}, 403
+            return {'error': 'Access denied to this account'}, 403
         
         return {
             'account_id': account.id,
@@ -311,8 +311,8 @@ def get_account(account_id):
         }, 200
         
     except Exception as e:
-        logger.error(f"Greška pri preuzimanju računa: {str(e)}")
-        return {'error': 'Greška pri preuzimanju računa'}, 500
+        logger.error(f"Error fetching account: {str(e)}")
+        return {'error': 'Error fetching account'}, 500
 
 # ============= TRANSACTION ENDPOINTS =============
 
@@ -320,7 +320,7 @@ def get_account(account_id):
 @require_auth(allowed_roles=['customer', 'teller', 'admin'])
 @limiter.limit("20 per hour")
 def transfer():
-    """Presledi novac između računa"""
+    """Transfer money between accounts"""
     try:
         data = request.get_json()
         
@@ -329,20 +329,20 @@ def transfer():
         amount = float(data['amount'])
         
         if not from_account or not to_account:
-            return {'error': 'Račun ne postoji'}, 404
+            return {'error': 'Account not found'}, 404
         
-        # RBAC provera — blagajnik i klijent mogu samo sa svojih računa
+        # RBAC check — teller and customer can only transfer from their own accounts
         if request.user_role in ('customer', 'teller') and from_account.user_id != request.user_id:
-            log_action('TRANSFER_DENIED', f"Pokušaj neovlašćenog transfera", request.user_id, 'failed')
-            return {'error': 'Nemate pristup tom računu'}, 403
+            log_action('TRANSFER_DENIED', f"Unauthorized transfer attempt", request.user_id, 'failed')
+            return {'error': 'Access denied to this account'}, 403
         
         if amount <= 0:
-            return {'error': 'Iznos mora biti veći od 0'}, 400
+            return {'error': 'Amount must be greater than 0'}, 400
         
         if from_account.balance < amount:
-            return {'error': 'Nedovoljna sredstva'}, 400
+            return {'error': 'Insufficient funds'}, 400
         
-        # Izvršavanje transfera
+        # Execute transfer
         from_account.balance -= amount
         to_account.balance += amount
         
@@ -368,22 +368,22 @@ def transfer():
         
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Greška pri transferu: {str(e)}")
-        return {'error': 'Greška pri transferu'}, 500
+        logger.error(f"Transfer error: {str(e)}")
+        return {'error': 'Transfer error'}, 500
 
 @app.route('/api/transactions/<int:account_id>', methods=['GET'])
 @require_auth(allowed_roles=['customer', 'teller', 'admin'])
 def get_transactions(account_id):
-    """Preuzmи istoriju transakcija"""
+    """Get transaction history"""
     try:
         account = Account.query.get(account_id)
         
         if not account:
-            return {'error': 'Račun ne postoji'}, 404
+            return {'error': 'Account not found'}, 404
         
-        # RBAC provera
+        # RBAC check
         if request.user_role == 'customer' and account.user_id != request.user_id:
-            return {'error': 'Nemate pristup tom računu'}, 403
+            return {'error': 'Access denied to this account'}, 403
         
         transactions = Transaction.query.filter(
             (Transaction.from_account_id == account_id) | (Transaction.to_account_id == account_id)
@@ -400,15 +400,15 @@ def get_transactions(account_id):
         }, 200
         
     except Exception as e:
-        logger.error(f"Greška pri preuzimanju transakcija: {str(e)}")
-        return {'error': 'Greška pri preuzimanju transakcija'}, 500
+        logger.error(f"Error fetching transactions: {str(e)}")
+        return {'error': 'Error fetching transactions'}, 500
 
 # ============= ADMIN ENDPOINTS =============
 
 @app.route('/api/admin/audit-log', methods=['GET'])
 @require_auth(allowed_roles=['admin'])
 def get_audit_log():
-    """Preuzmи audit log (samo admin)"""
+    """Get audit log (admin only)"""
     try:
         logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(100).all()
 
@@ -432,13 +432,13 @@ def get_audit_log():
         return {'audit_logs': result}, 200
         
     except Exception as e:
-        logger.error(f"Greška pri preuzimanju audit loga: {str(e)}")
-        return {'error': 'Greška pri preuzimanju audit loga'}, 500
+        logger.error(f"Error fetching audit log: {str(e)}")
+        return {'error': 'Error fetching audit log'}, 500
 
 @app.route('/api/admin/users', methods=['GET'])
 @require_auth(allowed_roles=['admin'])
 def get_users():
-    """Preuzmи sve korisnike (samo admin)"""
+    """Get all users (admin only)"""
     try:
         users = User.query.all()
         
@@ -453,45 +453,45 @@ def get_users():
         }, 200
         
     except Exception as e:
-        logger.error(f"Greška pri preuzimanju korisnika: {str(e)}")
-        return {'error': 'Greška pri preuzimanju korisnika'}, 500
+        logger.error(f"Error fetching users: {str(e)}")
+        return {'error': 'Error fetching users'}, 500
 
 # ============= ERROR HANDLERS =============
 
 @app.errorhandler(400)
 def bad_request(error):
-    return {'error': 'Loš zahtev'}, 400
+    return {'error': 'Bad request'}, 400
 
 @app.errorhandler(401)
 def unauthorized(error):
-    return {'error': 'Nisu autorizovani'}, 401
+    return {'error': 'Unauthorized'}, 401
 
 @app.errorhandler(403)
 def forbidden(error):
-    return {'error': 'Pristup odbijen'}, 403
+    return {'error': 'Access denied'}, 403
 
 @app.errorhandler(404)
 def not_found(error):
-    return {'error': 'Nije pronađeno'}, 404
+    return {'error': 'Not found'}, 404
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    return {'error': 'Previše zahteva - pokušajte kasnije'}, 429
+    return {'error': 'Too many requests - try again later'}, 429
 
 @app.errorhandler(500)
 def internal_error(error):
-    return {'error': 'Interna greška servera'}, 500
+    return {'error': 'Internal server error'}, 500
 
 # ============= HEALTH CHECK =============
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    """Provera zdravlja aplikacije"""
+    """Application health check"""
     return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}, 200
 
 @app.route('/api/debug/users', methods=['GET'])
 def debug_users():
-    """Debug endpoint - prikaži sve korisnike (SAMO ZA DEVELOPMENT)"""
+    """Debug endpoint - show all users (DEVELOPMENT ONLY)"""
     if os.getenv('FLASK_ENV') != 'development':
         return {'error': 'Forbidden'}, 403
     try:
@@ -507,7 +507,7 @@ def debug_users():
             } for u in users]
         }, 200
     except Exception as e:
-        logger.error(f"Greška pri debug query: {str(e)}")
+        logger.error(f"Debug query error: {str(e)}")
         return {'error': str(e)}, 500
 
 # ============= DB INITIALIZATION =============
@@ -515,7 +515,7 @@ def debug_users():
 _db_initialized = False
 
 def init_db():
-    """Inicijalizuj bazu podataka (idempotent - sigurno za više call-ova)"""
+    """Initialize database (idempotent - safe for multiple calls)"""
     global _db_initialized
     
     if _db_initialized:
@@ -523,26 +523,26 @@ def init_db():
     
     try:
         with app.app_context():
-            # Proveri da li tabele postoje pre nego što kreiram nove
+            # Check if tables exist before creating new ones
             inspector = __import__('sqlalchemy').inspect(db.engine)
             tables = inspector.get_table_names()
             
             if not tables:
-                logger.info("Kreiram tabele...")
+                logger.info("Creating tables...")
                 db.create_all()
-                logger.info("Baza podataka inicijalizovana")
+                logger.info("Database initialized")
             else:
-                logger.info(f"Baza podataka već inicijalizovana ({len(tables)} tabela)")
+                logger.info(f"Database already initialized ({len(tables)} tables)")
             
             _db_initialized = True
     except Exception as e:
-        logger.error(f"Greška pri inicijalizaciji baze: {str(e)}")
+        logger.error(f"Database initialization error: {str(e)}")
         _db_initialized = True
 
 if __name__ == '__main__':
     init_db()
     
-    # Razvoj sa HTTP - u produkciji koristiti HTTPS
+    # Development with HTTP - in production use HTTPS
     app.run(
         host='0.0.0.0',
         port=int(os.getenv('PORT', 5000)),
@@ -550,8 +550,8 @@ if __name__ == '__main__':
         ssl_context='adhoc' if os.getenv('FLASK_ENV') == 'production' else None
     )
 
-# Inicijalizuj bazu na prvi zahtev kada se koristi gunicorn
+# Initialize database on first request when using gunicorn
 @app.before_request
 def before_request_init():
-    """Inicijalizuj bazu ako nije već inicijalizovana"""
+    """Initialize database if not already initialized"""
     init_db()

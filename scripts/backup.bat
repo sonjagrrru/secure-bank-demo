@@ -18,28 +18,28 @@ set BACKUP_FILE=%BACKUP_DIR%\banking_db_%mydate%_%mytime%.sql
 echo Banking App - Database Backup
 echo =================================
 echo.
-echo Proveravanja bazu podataka...
+echo Checking database...
 
 REM Check if PostgreSQL container is running
 docker ps | find "banking_postgres" >nul
 if errorlevel 1 (
-    echo PostgreSQL kontejner nije pokrenut!
-    echo Pokrenite aplikaciju sa: scripts\setup.bat
+    echo PostgreSQL container is not running!
+    echo Start the application with: scripts\setup.bat
     exit /b 1
 )
 
-echo Kreiram backup u: %BACKUP_FILE%
+echo Creating backup to: %BACKUP_FILE%
 
 docker exec banking_postgres pg_dump -U banking_user -d banking_db --format=plain > %BACKUP_FILE%
 
 if errorlevel 1 (
-    echo Backup nije uspeo!
+    echo Backup failed!
     exit /b 1
 )
 
-echo Backup je uspesno kreiran!
+echo Backup created successfully!
 echo.
-echo Lokacija: %BACKUP_FILE%
+echo Location: %BACKUP_FILE%
 echo.
-echo Za restore pokrenite:
+echo To restore run:
 echo   psql -U banking_user -d banking_db ^< %BACKUP_FILE%

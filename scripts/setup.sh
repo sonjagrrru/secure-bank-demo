@@ -9,102 +9,102 @@ set -e
 echo "Banking App - Setup Script"
 echo "=============================="
 
-# Provera Docker-a
+# Check Docker
 if ! command -v docker &> /dev/null; then
-    echo "Docker nije instaliran. Molimo instalirajte Docker prvo."
+    echo "Docker is not installed. Please install Docker first."
     exit 1
 fi
 
 if ! command -v docker-compose &> /dev/null; then
-    echo "Docker Compose nije instaliran. Molimo instalirajte Docker Compose prvo."
+    echo "Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
 
-# Kreiraj .env fajl ako ne postoji
+# Create .env file if it doesn't exist
 if [ ! -f .env ]; then
-    echo "Kreiram .env fajl..."
+    echo "Creating .env file..."
     cp .env.example .env
-    echo ".env fajl je kreiran - OBAVEZNO ga uredite sa svojim vrednostima!"
+    echo ".env file created - MAKE SURE to edit it with your own values!"
 fi
 
-# Provera da li su potrebni ključevi postavljeni
+# Check if required keys are set
 if grep -q "change-this-in-production" .env; then
-    echo "Upozorenje: Nece biti prosljedjene produkcijske lozinke!"
-    echo "Molimo uredite .env fajl sa sigurnim kljucevima:"
+    echo "Warning: Production passwords will not be forwarded!"
+    echo "Please edit the .env file with secure keys:"
     echo "   - SECRET_KEY"
     echo "   - ENCRYPTION_KEY"
     echo ""
-    echo "Za generisanje ENCRYPTION_KEY koristite:"
+    echo "To generate ENCRYPTION_KEY use:"
     echo "   python3 -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
 fi
 
-# Kreiraj SSL sertifikate ako ne postoje
+# Create SSL certificates if they don't exist
 if [ ! -f docker/certs/banking.crt ] || [ ! -f docker/certs/banking.key ]; then
-    echo "Kreiram SSL sertifikate..."
+    echo "Creating SSL certificates..."
     mkdir -p docker/certs
     openssl req -x509 -newkey rsa:4096 -nodes \
         -out docker/certs/banking.crt \
         -keyout docker/certs/banking.key \
         -days 365 \
         -subj "/C=RS/ST=Serbia/L=Belgrade/O=Banking/CN=localhost"
-    echo "SSL sertifikati su kreirani"
+    echo "SSL certificates created"
 fi
 
-# Pokreni Docker Compose
+# Start Docker Compose
 echo ""
-echo "Pokrecem Docker kontejnere..."
+echo "Starting Docker containers..."
 docker-compose -f docker/docker-compose.yml up -d
 
 echo ""
-echo "Cekam da se servisi pokrenu..."
+echo "Waiting for services to start..."
 sleep 10
 
-# Proveri zdravlje servisa
+# Check service health
 echo ""
-echo "Provera zdravlja servisa..."
+echo "Checking service health..."
 
-# Provjeri PostgreSQL
+# Check PostgreSQL
 echo -n "  PostgreSQL: "
 if docker exec banking_postgres pg_isready -U banking_user -d banking_db > /dev/null 2>&1; then
-    echo "Spreman"
+    echo "Ready"
 else
-    echo "Nije dostupan"
+    echo "Not available"
 fi
 
-# Provjeri Nginx (reverse proxy)
+# Check Nginx (reverse proxy)
 echo -n "  Nginx (reverse proxy): "
 if curl -s http://localhost/health > /dev/null 2>&1; then
-    echo "Spreman"
+    echo "Ready"
 else
-    echo "Pokretanje se još uvek dešava..."
+    echo "Still starting up..."
 fi
 
-# Provjeri Backend API (kroz Nginx)
-echo -n "  Backend API (kroz Nginx): "
+# Check Backend API (through Nginx)
+echo -n "  Backend API (through Nginx): "
 if curl -s http://localhost/api/health > /dev/null 2>&1; then
-    echo "Spreman"
+    echo "Ready"
 else
-    echo "Pokretanje se još uvek dešava..."
+    echo "Still starting up..."
 fi
 
 echo ""
-echo "Setup je zavrsen!"
+echo "Setup is complete!"
 echo ""
-echo "Dostupne aplikacije (sve kroz Nginx reverse proxy):"
-echo "  - Frontend:     http://localhost  (ili https://localhost)"
+echo "Available applications (all through Nginx reverse proxy):"
+echo "  - Frontend:     http://localhost  (or https://localhost)"
 echo "  - Backend API:  http://localhost/api"
 echo ""
-echo "Interni servisi (dostupni samo unutar Docker mreze):"
+echo "Internal services (only accessible within Docker network):"
 echo "  - Backend:      banking_backend:5000"
 echo "  - PostgreSQL:   banking_postgres:5432"
 echo ""
-echo "Test korisnike:"
+echo "Test users:"
 echo "  - admin@banking.local (admin)"
 echo "  - teller@banking.local (teller)"
 echo "  - customer@banking.local (customer)"
-echo "  - Lozinka: admin123"
+echo "  - Password: admin123"
 echo ""
-echo "Za više informacija vidite README.md"
+echo "For more information see README.md"
 echo ""
-echo "Za zaustavljanje pokrenite:"
+echo "To stop run:"
 echo "   docker-compose -f docker/docker-compose.yml down"

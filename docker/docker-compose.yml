@@ -1,21 +1,21 @@
 services:
-  # ===== Nginx Reverse Proxy (PRVI - mora biti dostupan) =====
+  # ===== Nginx Reverse Proxy (FIRST - must be accessible) =====
   nginx:
     build:
       context: .
       dockerfile: Dockerfile.nginx
     container_name: banking_nginx
     ports:
-      # SAMO ova dva porta su javna
+      # ONLY these two ports are public
       - "80:80"
       - "443:443"
     volumes:
-      # Nginx konfiguracija (sertifikati se generišu u Dockerfile)
+      # Nginx configuration (certificates are generated in Dockerfile)
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - nginx_logs:/var/log/nginx
     networks:
       - banking_network
-    # Nginx ne zavisi od ostalih servisa - oni se startuju nakon Nginx-a
+    # Nginx does not depend on other services - they start after Nginx
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -27,7 +27,7 @@ services:
     # cap_drop:
     #  - ALL
 
-  # ===== PostgreSQL Baza Podataka =====
+  # ===== PostgreSQL Database =====
   postgres:
     build:
       context: ..
@@ -37,9 +37,9 @@ services:
       POSTGRES_USER: ${DB_USER:-banking_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
       POSTGRES_DB: ${DB_NAME:-banking_db}
-    # NEMA javnih portova - dostupna samo Backend-u kroz private network
+    # NO public ports - accessible only by Backend through private network
     volumes:
-      # Enkriptovani volume za bazo podataka
+      # Encrypted volume for database
       - postgres_data:/var/lib/postgresql/data
     networks:
       - banking_network
@@ -49,7 +49,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Sigurnosna ograničenja
+    # Security constraints
     security_opt:
       - no-new-privileges:true
 
@@ -60,7 +60,7 @@ services:
       dockerfile: docker/Dockerfile.backend
     container_name: banking_backend
     environment:
-      # Baza podataka
+      # Database
       DATABASE_URL: postgresql://${DB_USER:-banking_user}:${DB_PASSWORD:-secure_password}@postgres:5432/${DB_NAME:-banking_db}
       
       # Security
@@ -72,14 +72,14 @@ services:
       SSL_CERT_PATH: /etc/ssl/certs/banking.crt
       SSL_KEY_PATH: /etc/ssl/private/banking.key
       
-      # CORS - pristupan SAMO preko Nginx reverse proxy-ja
+      # CORS - accessible ONLY through Nginx reverse proxy
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
       
-      # Port (interno u docker network, ne javno)
+      # Port (internal to docker network, not public)
       PORT: 5000
-    # NEMA javnih portova - dostupan samo kroz Nginx
+    # NO public ports - accessible only through Nginx
     volumes:
-      # Mount SSL sertifikati (ako postoje)
+      # Mount SSL certificates (if they exist)
       - ./certs/banking.crt:/etc/ssl/certs/banking.crt:ro
       - ./certs/banking.key:/etc/ssl/private/banking.key:ro
       - ./logs:/app/logs
@@ -96,7 +96,7 @@ services:
       retries: 3
       start_period: 5s
     
-    # Sigurnosna ograničenja
+    # Security constraints
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -108,7 +108,7 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
     container_name: banking_frontend
-    # NEMA javnih portova - dostupan samo kroz Nginx
+    # NO public ports - accessible only through Nginx
     environment:
       REACT_APP_API_URL: ${API_URL:-http://localhost/api}
     networks:
