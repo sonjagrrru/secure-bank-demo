@@ -102,6 +102,13 @@ docker compose -f docker/docker-compose.yml up -d --build nginx      # Nginx con
 docker compose -f docker/docker-compose.yml up -d --build postgres   # DB schema / init-db.sql changes
 ```
 
+**When to rebuild Nginx:**
+- Changed `docker/nginx.conf` (rate limits, proxy rules, security headers, server blocks)
+- Changed SSL certificates in `docker/certs/`
+- Changed `docker/Dockerfile.nginx`
+
+Nginx does **not** need rebuilding for backend, frontend, or database code changes — it only forwards traffic.
+
 > **Note:** Changes to `init-db.sql` only take effect on a fresh database. If the database already exists, use the reset script below or drop the volume first with `docker compose -f docker/docker-compose.yml down -v`.
 
 ## Database Reset
