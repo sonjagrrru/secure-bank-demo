@@ -1,7 +1,7 @@
 {
   "name": "banking-app-frontend",
   "version": "1.0.0",
-  "description": "React frontend za bankarski sistem sa enkripcionom zaštitom",
+  "description": "React frontend for banking system with encryption protection",
   "private": true,
   "homepage": "./",
   "dependencies": {
