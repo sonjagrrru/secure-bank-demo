@@ -41,7 +41,6 @@ services:
     volumes:
       # Enkriptovani volume za bazo podataka
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - banking_network
     restart: unless-stopped
