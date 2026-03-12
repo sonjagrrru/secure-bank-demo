@@ -1,0 +1,14 @@
+FROM postgres:16-alpine
+
+# Postavi environment
+ENV POSTGRES_USER=banking_user
+ENV POSTGRES_PASSWORD=secure_password
+ENV POSTGRES_DB=banking_db
+
+# Kopiraj init SQL skripte
+COPY docker/init-db.sql /docker-entrypoint-initdb.d/
+
+# Omogući šifrovanje
+RUN apk add --no-cache openssl
+
+LABEL maintainer="Banking System"
