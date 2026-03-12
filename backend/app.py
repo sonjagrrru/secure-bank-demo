@@ -357,7 +357,7 @@ def transfer():
         db.session.add(transaction)
         db.session.commit()
         
-        log_action('TRANSFER', f"Transfer: {amount} sa {from_account.account_number} na {to_account.account_number}", request.user_id)
+        log_action('TRANSFER', f"Transfer: {amount} from {from_account.account_number} to {to_account.account_number}", request.user_id)
         
         return {
             'transaction_id': transaction.id,
