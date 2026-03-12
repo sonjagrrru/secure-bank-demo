@@ -87,6 +87,44 @@ docker compose -f docker/docker-compose.yml up -d --build
 scripts\teardown.bat
 ```
 
+## Rebuilding After Changes
+
+After modifying any source code (frontend, backend, Docker configs, etc.), rebuild and restart the affected containers:
+
+```powershell
+# Rebuild everything
+docker compose -f docker/docker-compose.yml up -d --build
+
+# Or rebuild only what you changed:
+docker compose -f docker/docker-compose.yml up -d --build backend    # Python/Flask changes
+docker compose -f docker/docker-compose.yml up -d --build frontend   # React changes
+docker compose -f docker/docker-compose.yml up -d --build nginx      # Nginx config changes
+docker compose -f docker/docker-compose.yml up -d --build postgres   # DB schema / init-db.sql changes
+```
+
+> **Note:** Changes to `init-db.sql` only take effect on a fresh database. If the database already exists, use the reset script below or drop the volume first with `docker compose -f docker/docker-compose.yml down -v`.
+
+## Database Reset
+
+To wipe all data and re-seed the database with fresh test data:
+
+```powershell
+# Windows
+scripts\reset-db.bat
+
+# Linux / macOS
+./scripts/reset-db.sh
+```
+
+The script:
+1. Truncates all tables (users, accounts, transactions, audit_logs)
+2. Inserts 3 test users (admin, teller, customer — password: `admin123`)
+3. Creates 2 accounts per user (checking + savings) via API (balances are Fernet-encrypted)
+4. Creates sample transactions (transfers between accounts)
+5. Verifies final row counts
+
+> Account balances are encrypted at rest (AES-256 Fernet), so accounts and transactions **must** be created through the API — not via direct SQL inserts.
+
 ## Security Testing
 
 ### 1. Access Without Token (should return 401)
